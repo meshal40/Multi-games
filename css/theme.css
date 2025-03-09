@@ -1,0 +1,36 @@
+/* styles.css - Updated theme colors that apply to the entire document */
+
+:root {
+    /* Dark theme (default) */
+    --background: #333333;
+    --card-bg: #444444;
+    --text: #ffffff;
+    --cell: #555555;
+    --cell-hover: #666666;
+    --button-bg: #777777;
+    --button-text: #ffffff;
+    --button-hover: #888888;
+    --accent: #33b0ef;
+    --accent-2: #ff66cc;
+}
+
+html.light-theme {
+    /* Light theme */
+    --background: #e0e0e0;
+    --card-bg: #c0c0c0;
+    --text: #333333;
+    --cell: #d9d9d9;
+    --cell-hover: #bbbbbb;
+    --button-bg: #a0a0a0;
+    --button-text: #ffffff;
+    --button-hover: #888888;
+    --accent: #3366cc;
+    --accent-2: #cc3366;
+}
+
+/* Basic transitions for theme switching */
+body {
+    background-color: var(--background);
+    color: var(--text);
+    transition: background-color 0.3s, color 0.3s;
+}

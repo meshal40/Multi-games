@@ -1,0 +1,339 @@
+/* chess.css - Updated with settings on right side and larger board */
+
+/* General page styles */
+body {
+    font-family: Arial, sans-serif;
+    background-color: var(--background);
+    color: var(--text);
+    margin: 0;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+h1 {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Navigation */
+.navigation {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 100;
+}
+
+.nav-button {
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.nav-button:hover {
+    background-color: var(--button-hover);
+}
+
+.nav-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Theme toggle */
+.theme-toggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+
+#theme-button {
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#theme-button:hover {
+    background-color: var(--button-hover);
+}
+
+/* Main game layout - side by side */
+.game-container {
+    display: flex;
+    flex-direction: row; /* Changed to row for side-by-side layout */
+    align-items: flex-start; /* Align to top */
+    justify-content: center;
+    width: 100%;
+    max-width: 900px; /* Increased to accommodate side-by-side */
+    margin: 0 auto;
+    gap: 20px; /* Space between board and settings */
+}
+
+/* Left side with board and status */
+.game-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 600px; /* Larger board */
+}
+
+/* Right side with settings */
+.game-right {
+    display: flex;
+    flex-direction: column;
+    width: 250px; /* Fixed width for settings panel */
+}
+
+/* Game info */
+.game-info {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 15px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#game-status-text {
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+/* Captured pieces display */
+.captured-pieces {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin: 10px 0;
+}
+
+.captured-white, .captured-black {
+    font-size: 24px;
+    min-height: 30px;
+    background-color: var(--card-bg);
+    padding: 5px 10px;
+    border-radius: 5px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: 0 5px;
+    min-width: 45%;
+}
+
+/* Chess board - larger */
+.chess-board {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    gap: 0;
+    background-color: var(--card-bg);
+    border: 10px solid var(--card-bg);
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 600px; /* Increased board size */
+    aspect-ratio: 1 / 1;
+    margin: 0 auto;
+}
+
+/* Chess cells */
+.cell {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 48px; /* Larger pieces for bigger board */
+    cursor: pointer;
+    user-select: none;
+}
+
+.cell.light {
+    background-color: #f0f0f0;
+}
+
+.cell.dark {
+    background-color: #787878;
+}
+
+.cell.selected {
+    background-color: rgba(0, 255, 0, 0.3);
+}
+
+.cell.highlight {
+    background-color: rgba(255, 255, 0, 0.4);
+}
+
+/* Board coordinates */
+.coordinates {
+    position: absolute;
+    font-size: 12px;
+    color: var(--text);
+    opacity: 0.7;
+}
+
+.rank {
+    left: 2px;
+    top: 2px;
+}
+
+.file {
+    right: 2px;
+    bottom: 2px;
+}
+
+/* Game settings - now on the right side */
+.game-settings {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    background-color: var(--card-bg);
+    padding: 15px;
+    border-radius: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+}
+
+/* Setting rows */
+.setting-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.setting-row p {
+    margin: 0 0 5px 0;
+    text-align: center;
+    font-weight: bold;
+}
+
+/* Option buttons */
+.option-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 5px;
+    width: 100%;
+}
+
+.option-button {
+    background-color: transparent;
+    color: var(--button-text);
+    border: 2px solid var(--button-bg);
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    flex: 1;
+    text-align: center;
+}
+
+.option-button.active {
+    background-color: var(--button-bg);
+    font-weight: bold;
+}
+
+/* New game button */
+#new-game {
+    margin-top: 15px;
+    width: 100%;
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    border: none;
+    padding: 12px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+#new-game:hover {
+    background-color: var(--button-hover);
+}
+
+/* Footer */
+footer {
+    margin-top: auto;
+    text-align: center;
+    padding: 20px;
+    opacity: 0.7;
+    width: 100%;
+}
+
+/* Hide audio elements */
+audio {
+    display: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+    .game-container {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .game-right {
+        width: 100%;
+        max-width: 600px;
+        margin-top: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .navigation {
+        position: relative;
+        top: 0;
+        left: 0;
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+    
+    .theme-toggle {
+        position: relative;
+        top: 0;
+        right: 0;
+        margin-bottom: 20px;
+    }
+    
+    body {
+        padding: 10px;
+    }
+    
+    .chess-board {
+        max-width: 450px;
+    }
+    
+    .cell {
+        font-size: 36px;
+    }
+}
+
+@media (max-width: 500px) {
+    .chess-board {
+        max-width: 350px;
+    }
+    
+    .cell {
+        font-size: 30px;
+    }
+    
+    .game-left, .game-right {
+        max-width: 350px;
+    }
+}

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe with AI - Game Hub</title>
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/tictactoe.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <div class="navigation">
+        <button class="nav-button" onclick="location.href='index.html'">Home</button>
+        <button class="nav-button" onclick="location.href='tictactoe.html'" disabled>Tic-Tac-Toe</button>
+        <button class="nav-button" onclick="location.href='chess.html'">Chess</button>
+    </div>
+
+    <!-- Theme Toggle -->
+    <div class="theme-toggle">
+        <button id="theme-button">Light Mode</button>
+    </div>
+
+    <h1>Tic-Tac-Toe</h1>
+    
+    <div class="game-container">
+        <div class="game-info">
+            <h2 id="game-status-text">Your Turn (X)</h2>
+        </div>
+
+        <div class="game-board" id="game-board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+
+        <div class="game-controls">
+            <div class="game-settings">
+                <div class="setting-row">
+                    <p>Difficulty:</p>
+                    <div class="option-buttons">
+                        <button id="easy-mode" class="option-button active">Easy</button>
+                        <button id="normal-mode" class="option-button">Normal</button>
+                        <button id="hard-mode" class="option-button">Can't Win</button>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <p>First Move:</p>
+                    <div class="option-buttons">
+                        <button id="player-starts" class="option-button active">You (X)</button>
+                        <button id="ai-starts" class="option-button">AI (O)</button>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <p>Sound:</p>
+                    <div class="option-buttons">
+                        <button id="sound-on" class="option-button active">On</button>
+                        <button id="sound-off" class="option-button">Off</button>
+                    </div>
+                </div>
+                <button id="new-game">Start The Game</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2025 AI Game Hub | Tic-Tac-Toe Game</p>
+    </footer>
+
+    <!-- Audio Elements -->
+    <audio id="move-sound" preload="auto">
+        <source src="sounds/move.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="win-sound" preload="auto">
+        <source src="sounds/win.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="lose-sound" preload="auto">
+        <source src="sounds/lose.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="draw-sound" preload="auto">
+        <source src="sounds/draw.mp3" type="audio/mpeg">
+    </audio>
+    
+    <!-- Scripts -->
+    <script src="js/theme.js"></script>
+    <script src="js/sounds.js"></script>
+    <script src="js/tictactoe.js"></script>
+</body>
+</html>

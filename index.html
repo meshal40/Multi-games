@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Game Hub</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/homepage.css">
+</head>
+<body>
+    <div class="theme-toggle">
+        <button id="theme-button">Light Mode</button>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>AI Game Hub</h1>
+            <p class="subtitle">Play classic games against AI opponents</p>
+        </header>
+
+        <div class="game-grid">
+            <div class="game-card">
+                <div class="game-img tictactoe-img"></div>
+                <div class="game-info">
+                    <h2 class="game-title">Tic-Tac-Toe</h2>
+                    <p class="game-desc">Challenge the AI in this classic game of X's and O's. Choose your difficulty level and see if you can outsmart the computer!</p>
+                    <button class="play-btn" onclick="location.href='tictactoe.html'">Play Now</button>
+                </div>
+            </div>
+
+            <div class="game-card">
+                <div class="game-img chess-img"></div>
+                <div class="game-info">
+                    <h2 class="game-title">Chess</h2>
+                    <p class="game-desc">Test your strategy against our AI in a game of chess. Move your pieces wisely and try to checkmate the computer opponent.</p>
+                    <button class="play-btn" onclick="location.href='chess.html'">Play Now</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2025 AI Game Hub | All games feature adjustable difficulty and sound effects</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/theme.js"></script>
+</body>
+</html>
