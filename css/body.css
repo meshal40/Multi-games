@@ -1,16 +1,3 @@
-        /* Tic-Tac-Toe specific styles */
-        .game-board {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            background-color: var(--card-bg);
-            padding: 12px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 300px;
-            margin: 0 auto;
-        }
 
         h1, h2, h3 {
             margin-top: 0;
@@ -31,6 +18,64 @@ body {
     flex-direction: column;
     align-items: center;
 }
+/* Navigation */
+.navigation {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 100;
+    display: flex;
+    padding: 9px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.nav-button {
+    padding: 10px 20px;
+    margin-right: 8px;
+    background-color: var(--button-bg, #4a4a4a);
+    color: var(--button-text, #ffffff);
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.nav-button:hover {
+    background-color: var(--button-hover, #5a5a5a);
+    transform: translateY(-2px);
+}
+
+.nav-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: var(--primary-color, #4a90e2);
+    cursor: default;
+}
+
+/* Theme toggle */
+.theme-toggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+
+#theme-button {
+    padding: 8px 16px;
+    background-color: var(--button-bg, #4a4a4a);
+    color: var(--button-text, #ffffff);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+#theme-button:hover {
+    background-color: var(--button-hover, #5a5a5a);
+}
 
 /* Buttons */
 button {
@@ -46,45 +91,6 @@ button {
 
 button:hover {
     background-color: var(--button-hover);
-}
-
-.game-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    max-width: 300px;
-    margin: 0 auto;
-}
-
-.game-info {
-    margin-bottom: 10px;
-    text-align: center;
-    height: 50px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-/* Settings controls */
-.game-settings {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    background-color: var(--card-bg);
-    padding: 15px;
-    border-radius: 10px;
-    width: 98%;
-    max-width: 500px;
-    margin: 20px auto;
-}
-
-.setting-row {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
 }
 
 .option-buttons {
@@ -148,11 +154,24 @@ audio {
         }
 /* Responsive adjustments */
 @media (max-width: 768px) {
+    .navigation {
+        position: relative;
+        top: 0;
+        left: 0;
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+    
+    .theme-toggle {
+        position: relative;
+        top: 0;
+        right: 0;
+        margin-bottom: 20px;
+    }
     
     body {
         padding: 10px;
     }
 }
-        /* before edit
-
         
