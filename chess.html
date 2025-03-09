@@ -27,7 +27,7 @@
         <div class="game-board" id="chessboard"></div>
         
         <div class="game-controls">
-            <!-- Timer Display - Added directly to HTML -->
+            <!-- Timer Display -->
             <div class="timer-container">
                 <div class="timer-flex">
                     <div class="timer-display">
@@ -69,7 +69,7 @@
                     </div>
                 </div>
                 
-                <!-- Timer Settings - Added directly to HTML -->
+                <!-- Timer Settings -->
                 <div class="setting">
                     <label>Timer (minutes):</label>
                     <div class="time-dropdown" id="time-dropdown">
@@ -107,100 +107,11 @@
     </footer>
 
     <!-- Audio Elements -->
-    <audio id="move-sound" src="sounds/move.mp3"></audio>
-    <audio id="capture-sound" src="sounds/capture.mp3"></audio>
+    <audio id="move-sound" src="sounds/move.mp3" preload="auto"></audio>
+    <audio id="capture-sound" src="sounds/capture.mp3" preload="auto"></audio>
     
     <!-- Scripts -->
     <script src="js/theme.js"></script>
-    <script src="js/sound.js"></script>
-    <!-- Dropdown activation script -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize the dropdown
-            const dropdown = document.getElementById('time-dropdown');
-            const select = dropdown.querySelector('.time-dropdown-select');
-            const items = dropdown.querySelectorAll('.time-dropdown-item');
-            
-            // Toggle dropdown
-            select.addEventListener('click', function(e) {
-                e.stopPropagation();
-                dropdown.classList.toggle('active');
-            });
-            
-            // Close dropdown when clicking elsewhere
-            document.addEventListener('click', function() {
-                dropdown.classList.remove('active');
-            });
-            
-            // Handle item selection
-            items.forEach(function(item) {
-                item.addEventListener('click', function() {
-                    // Update selected class
-                    items.forEach(i => i.classList.remove('selected'));
-                    item.classList.add('selected');
-                    
-                    // Update text
-                    select.textContent = item.textContent;
-                    
-                    // Get time value
-                    const minutes = parseInt(item.textContent);
-                    
-                    // Update timer displays
-                    const playerTimer = document.getElementById('player-timer');
-                    const aiTimer = document.getElementById('ai-timer');
-                    
-                    if (playerTimer && aiTimer) {
-                        const formattedTime = formatTime(minutes * 60);
-                        playerTimer.textContent = formattedTime;
-                        aiTimer.textContent = formattedTime;
-                    }
-                    
-                    // Update global time setting if available
-                    if (window.selectedTime !== undefined) {
-                        window.selectedTime = minutes;
-                    }
-                    
-                    // Close dropdown
-                    dropdown.classList.remove('active');
-                });
-            });
-            
-            // Format time helper
-            function formatTime(seconds) {
-                const min = Math.floor(seconds / 60);
-                const sec = seconds % 60;
-                return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
-            }
-            
-            // Timer toggle functionality
-            const timerOn = document.getElementById('timer-on');
-            const timerOff = document.getElementById('timer-off');
-            const timerContainer = document.querySelector('.timer-container');
-            
-            if (timerOn && timerOff && timerContainer) {
-                timerOn.addEventListener('click', function() {
-                    timerOn.classList.add('active');
-                    timerOff.classList.remove('active');
-                    timerContainer.style.opacity = '1';
-                    if (window.settings) {
-                        window.settings.timerEnabled = true;
-                    }
-                });
-                
-                timerOff.addEventListener('click', function() {
-                    timerOff.classList.add('active');
-                    timerOn.classList.remove('active');
-                    timerContainer.style.opacity = '0.5';
-                    if (window.settings) {
-                        window.settings.timerEnabled = false;
-                    }
-                    if (window.stopTimers) {
-                        window.stopTimers();
-                    }
-                });
-            }
-        });
-    </script>
     <script src="js/chess.js"></script>
 </body>
 </html>

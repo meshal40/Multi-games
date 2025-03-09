@@ -37,8 +37,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let aiTimer = selectedTime * 60;
     let playerTimerInterval, aiTimerInterval;
     
-    // Initialize the dropdown if it exists in HTML
-    initializeTimerDropdown();
+    // Expose stopTimers to the window object so it can be called from HTML
+    window.stopTimers = stopTimers;
     
     // Game state
     let board = createInitialBoard();
@@ -48,6 +48,15 @@ document.addEventListener('DOMContentLoaded', function() {
     let gameInProgress = false;
     let promotionPending = false;
     let pendingPromotionIndex = null;
+    
+    // Check if essential DOM elements exist
+    if (!chessboard) {
+        console.error("Chessboard element not found!");
+        return; // Exit initialization if chessboard is missing
+    }
+    
+    // Initialize the dropdown if it exists in HTML
+    initializeTimerDropdown();
     
     // Initialize the board
     createChessBoard();
@@ -64,7 +73,91 @@ document.addEventListener('DOMContentLoaded', function() {
     createGameInfoUI();
     
     // New game button
-    newGameButton.addEventListener('click', startNewGame);
+    if (newGameButton) {
+        // Remove existing listeners to avoid duplicates
+        const newBtn = newGameButton.cloneNode(true);
+        newGameButton.parentNode.replaceChild(newBtn, newGameButton);
+        newBtn.addEventListener('click', startNewGame);
+    } else {
+        console.error("New game button not found!");
+    }
+    
+    // Setup event listeners for settings
+    function setupSettingsListeners() {
+        // Difficulty settings
+        if (difficultyButtons.easy && difficultyButtons.medium && difficultyButtons.hard) {
+            difficultyButtons.easy.addEventListener('click', () => {
+                settings.difficulty = 'easy';
+                updateSettingsUI();
+            });
+            
+            difficultyButtons.medium.addEventListener('click', () => {
+                settings.difficulty = 'medium';
+                updateSettingsUI();
+            });
+            
+            difficultyButtons.hard.addEventListener('click', () => {
+                settings.difficulty = 'hard';
+                updateSettingsUI();
+            });
+        }
+        
+        // Color settings
+        if (colorButtons.white && colorButtons.black) {
+            colorButtons.white.addEventListener('click', () => {
+                settings.playerColor = 'white';
+                updateSettingsUI();
+            });
+            
+            colorButtons.black.addEventListener('click', () => {
+                settings.playerColor = 'black';
+                updateSettingsUI();
+            });
+        }
+        
+        // Sound settings
+        if (soundButtons.on && soundButtons.off) {
+            soundButtons.on.addEventListener('click', () => {
+                settings.soundEnabled = true;
+                updateSettingsUI();
+            });
+            
+            soundButtons.off.addEventListener('click', () => {
+                settings.soundEnabled = false;
+                updateSettingsUI();
+            });
+        }
+    }
+    
+    // Update the UI based on current settings
+    function updateSettingsUI() {
+        // Update difficulty buttons
+        if (difficultyButtons.easy && difficultyButtons.medium && difficultyButtons.hard) {
+            difficultyButtons.easy.classList.toggle('active', settings.difficulty === 'easy');
+            difficultyButtons.medium.classList.toggle('active', settings.difficulty === 'medium');
+            difficultyButtons.hard.classList.toggle('active', settings.difficulty === 'hard');
+        }
+        
+        // Update color buttons
+        if (colorButtons.white && colorButtons.black) {
+            colorButtons.white.classList.toggle('active', settings.playerColor === 'white');
+            colorButtons.black.classList.toggle('active', settings.playerColor === 'black');
+        }
+        
+        // Update sound buttons
+        if (soundButtons.on && soundButtons.off) {
+            soundButtons.on.classList.toggle('active', settings.soundEnabled);
+            soundButtons.off.classList.toggle('active', !settings.soundEnabled);
+        }
+        
+        // Update timer toggle if it exists
+        const timerOn = document.getElementById('timer-on');
+        const timerOff = document.getElementById('timer-off');
+        if (timerOn && timerOff) {
+            timerOn.classList.toggle('active', settings.timerEnabled);
+            timerOff.classList.toggle('active', !settings.timerEnabled);
+        }
+    }
     
     // Initialize timer dropdown
     function initializeTimerDropdown() {
@@ -72,7 +165,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!dropdown) return;
         
         const select = dropdown.querySelector('.time-dropdown-select');
+        if (!select) return;
+        
         const items = dropdown.querySelectorAll('.time-dropdown-item');
+        if (!items || items.length === 0) return;
         
         // Check if event listeners are already attached
         if (dropdown.hasAttribute('data-initialized')) return;
@@ -94,6 +190,7 @@ document.addEventListener('DOMContentLoaded', function() {
             item.addEventListener('click', function() {
                 // Get time value before updating UI
                 const minutes = parseInt(item.textContent);
+                if (isNaN(minutes)) return;
                 
                 // Update selected class
                 items.forEach(i => i.classList.remove('selected'));
@@ -175,7 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return board;
     }
     
-    // Create the timer UI with professional dropdown
+    // Create the timer UI
     function createTimerUI() {
         console.log("Creating timer UI elements");
         
@@ -188,148 +285,151 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Create timer container
-        const timerContainer = document.createElement('div');
-        timerContainer.classList.add('timer-container');
-        
-        // Create timer display flex container
-        const timerFlex = document.createElement('div');
-        timerFlex.classList.add('timer-flex');
-        
-        // Player timer display
-        const playerTimerDisplay = document.createElement('div');
-        playerTimerDisplay.classList.add('timer-display');
-        
-        const playerLabel = document.createElement('div');
-        playerLabel.classList.add('timer-label');
-        playerLabel.textContent = 'YOUR TIME';
-        
-        playerTimerElement = document.createElement('div');
-        playerTimerElement.classList.add('timer-value');
-        playerTimerElement.id = 'player-timer';
-        playerTimerElement.textContent = formatTime(playerTimer);
-        
-        playerTimerDisplay.appendChild(playerLabel);
-        playerTimerDisplay.appendChild(playerTimerElement);
-        
-        // AI timer display
-        const aiTimerDisplay = document.createElement('div');
-        aiTimerDisplay.classList.add('timer-display');
-        
-        const aiLabel = document.createElement('div');
-        aiLabel.classList.add('timer-label');
-        aiLabel.textContent = 'AI TIME';
-        
-        aiTimerElement = document.createElement('div');
-        aiTimerElement.classList.add('timer-value');
-        aiTimerElement.id = 'ai-timer';
-        aiTimerElement.textContent = formatTime(aiTimer);
-        
-        aiTimerDisplay.appendChild(aiLabel);
-        aiTimerDisplay.appendChild(aiTimerElement);
-        
-        // Add timer displays to flex container
-        timerFlex.appendChild(playerTimerDisplay);
-        timerFlex.appendChild(aiTimerDisplay);
-        
-        // Add flex container to timer container
-        timerContainer.appendChild(timerFlex);
-        
-        // Create timer settings group
-        const timerSettingsGroup = document.createElement('div');
-        timerSettingsGroup.classList.add('settings-group');
-        
-        // Create dropdown for time selection if it doesn't exist
-        if (!document.getElementById('time-dropdown')) {
-            const timeDropdownContainer = document.createElement('div');
-            timeDropdownContainer.classList.add('setting');
+        // Create timer container if it doesn't exist
+        let timerContainer = document.querySelector('.timer-container');
+        if (!timerContainer) {
+            timerContainer = document.createElement('div');
+            timerContainer.classList.add('timer-container');
             
-            const timeDropdownLabel = document.createElement('label');
-            timeDropdownLabel.textContent = 'Timer (minutes):';
-            timeDropdownLabel.style.fontWeight = 'bold';
+            // Create timer display flex container
+            const timerFlex = document.createElement('div');
+            timerFlex.classList.add('timer-flex');
             
-            const timeDropdown = document.createElement('div');
-            timeDropdown.classList.add('time-dropdown');
-            timeDropdown.id = 'time-dropdown';
+            // Player timer display
+            const playerTimerDisplay = document.createElement('div');
+            playerTimerDisplay.classList.add('timer-display');
             
-            const timeDropdownSelect = document.createElement('div');
-            timeDropdownSelect.classList.add('time-dropdown-select');
-            timeDropdownSelect.textContent = `${selectedTime} ${selectedTime === 1 ? 'minute' : 'minutes'}`;
+            const playerLabel = document.createElement('div');
+            playerLabel.classList.add('timer-label');
+            playerLabel.textContent = 'YOUR TIME';
             
-            const timeDropdownList = document.createElement('ul');
-            timeDropdownList.classList.add('time-dropdown-list');
+            playerTimerElement = document.createElement('div');
+            playerTimerElement.classList.add('timer-value');
+            playerTimerElement.id = 'player-timer';
+            playerTimerElement.textContent = formatTime(playerTimer);
             
-            // Create time options (1-10 minutes)
-            for (let i = 1; i <= 10; i++) {
-                const listItem = document.createElement('li');
-                listItem.classList.add('time-dropdown-item');
-                if (i === selectedTime) {
-                    listItem.classList.add('selected');
+            playerTimerDisplay.appendChild(playerLabel);
+            playerTimerDisplay.appendChild(playerTimerElement);
+            
+            // AI timer display
+            const aiTimerDisplay = document.createElement('div');
+            aiTimerDisplay.classList.add('timer-display');
+            
+            const aiLabel = document.createElement('div');
+            aiLabel.classList.add('timer-label');
+            aiLabel.textContent = 'AI TIME';
+            
+            aiTimerElement = document.createElement('div');
+            aiTimerElement.classList.add('timer-value');
+            aiTimerElement.id = 'ai-timer';
+            aiTimerElement.textContent = formatTime(aiTimer);
+            
+            aiTimerDisplay.appendChild(aiLabel);
+            aiTimerDisplay.appendChild(aiTimerElement);
+            
+            // Add timer displays to flex container
+            timerFlex.appendChild(playerTimerDisplay);
+            timerFlex.appendChild(aiTimerDisplay);
+            
+            // Add flex container to timer container
+            timerContainer.appendChild(timerFlex);
+            
+            // Create timer settings group
+            const timerSettingsGroup = document.createElement('div');
+            timerSettingsGroup.classList.add('settings-group');
+            
+            // Create dropdown for time selection if it doesn't exist
+            if (!document.getElementById('time-dropdown')) {
+                const timeDropdownContainer = document.createElement('div');
+                timeDropdownContainer.classList.add('setting');
+                
+                const timeDropdownLabel = document.createElement('label');
+                timeDropdownLabel.textContent = 'Timer (minutes):';
+                timeDropdownLabel.style.fontWeight = 'bold';
+                
+                const timeDropdown = document.createElement('div');
+                timeDropdown.classList.add('time-dropdown');
+                timeDropdown.id = 'time-dropdown';
+                
+                const timeDropdownSelect = document.createElement('div');
+                timeDropdownSelect.classList.add('time-dropdown-select');
+                timeDropdownSelect.textContent = `${selectedTime} ${selectedTime === 1 ? 'minute' : 'minutes'}`;
+                
+                const timeDropdownList = document.createElement('ul');
+                timeDropdownList.classList.add('time-dropdown-list');
+                
+                // Create time options (1-10 minutes)
+                for (let i = 1; i <= 10; i++) {
+                    const listItem = document.createElement('li');
+                    listItem.classList.add('time-dropdown-item');
+                    if (i === selectedTime) {
+                        listItem.classList.add('selected');
+                    }
+                    listItem.textContent = `${i} ${i === 1 ? 'minute' : 'minutes'}`;
+                    timeDropdownList.appendChild(listItem);
                 }
-                listItem.textContent = `${i} ${i === 1 ? 'minute' : 'minutes'}`;
-                timeDropdownList.appendChild(listItem);
+                
+                timeDropdown.appendChild(timeDropdownSelect);
+                timeDropdown.appendChild(timeDropdownList);
+                
+                timeDropdownContainer.appendChild(timeDropdownLabel);
+                timeDropdownContainer.appendChild(timeDropdown);
+                timerSettingsGroup.appendChild(timeDropdownContainer);
             }
             
-            timeDropdown.appendChild(timeDropdownSelect);
-            timeDropdown.appendChild(timeDropdownList);
-            
-            timeDropdownContainer.appendChild(timeDropdownLabel);
-            timeDropdownContainer.appendChild(timeDropdown);
-            timerSettingsGroup.appendChild(timeDropdownContainer);
-        }
-        
-        // Create timer toggle if it doesn't exist
-        if (!document.getElementById('timer-on')) {
-            const timerToggleContainer = document.createElement('div');
-            timerToggleContainer.classList.add('setting');
-            timerToggleContainer.style.marginTop = '15px';
-            
-            const timerToggleLabel = document.createElement('label');
-            timerToggleLabel.textContent = 'Timer:';
-            timerToggleLabel.style.fontWeight = 'bold';
-            
-            const timerToggleOptions = document.createElement('div');
-            timerToggleOptions.classList.add('options');
-            
-            const timerOnButton = document.createElement('button');
-            timerOnButton.classList.add('option', 'active');
-            timerOnButton.textContent = 'On';
-            timerOnButton.id = 'timer-on';
-            
-            const timerOffButton = document.createElement('button');
-            timerOffButton.classList.add('option');
-            timerOffButton.textContent = 'Off';
-            timerOffButton.id = 'timer-off';
-            
-            timerToggleOptions.appendChild(timerOnButton);
-            timerToggleOptions.appendChild(timerOffButton);
-            timerToggleContainer.appendChild(timerToggleLabel);
-            timerToggleContainer.appendChild(timerToggleOptions);
-            
-            timerSettingsGroup.appendChild(timerToggleContainer);
-        }
-        
-        // Add to DOM
-        const gameControls = document.querySelector('.game-controls');
-        const statusElement = document.querySelector('.status');
-        const settingsDiv = document.querySelector('.settings');
-        
-        if (gameControls && statusElement) {
-            gameControls.insertBefore(timerContainer, statusElement);
-        }
-        
-        if (settingsDiv) {
-            // Find the start game button
-            const startButton = settingsDiv.querySelector('#new-game');
-            if (startButton) {
-                settingsDiv.insertBefore(timerSettingsGroup, startButton);
-            } else {
-                settingsDiv.appendChild(timerSettingsGroup);
+            // Create timer toggle if it doesn't exist
+            if (!document.getElementById('timer-on')) {
+                const timerToggleContainer = document.createElement('div');
+                timerToggleContainer.classList.add('setting');
+                timerToggleContainer.style.marginTop = '15px';
+                
+                const timerToggleLabel = document.createElement('label');
+                timerToggleLabel.textContent = 'Timer:';
+                timerToggleLabel.style.fontWeight = 'bold';
+                
+                const timerToggleOptions = document.createElement('div');
+                timerToggleOptions.classList.add('options');
+                
+                const timerOnButton = document.createElement('button');
+                timerOnButton.classList.add('option', 'active');
+                timerOnButton.textContent = 'On';
+                timerOnButton.id = 'timer-on';
+                
+                const timerOffButton = document.createElement('button');
+                timerOffButton.classList.add('option');
+                timerOffButton.textContent = 'Off';
+                timerOffButton.id = 'timer-off';
+                
+                timerToggleOptions.appendChild(timerOnButton);
+                timerToggleOptions.appendChild(timerOffButton);
+                timerToggleContainer.appendChild(timerToggleLabel);
+                timerToggleContainer.appendChild(timerToggleOptions);
+                
+                timerSettingsGroup.appendChild(timerToggleContainer);
             }
+            
+            // Add to DOM
+            const gameControls = document.querySelector('.game-controls');
+            const statusElement = document.querySelector('.status');
+            const settingsDiv = document.querySelector('.settings');
+            
+            if (gameControls && statusElement) {
+                gameControls.insertBefore(timerContainer, statusElement);
+            }
+            
+            if (settingsDiv) {
+                // Find the start game button
+                const startButton = settingsDiv.querySelector('#new-game');
+                if (startButton) {
+                    settingsDiv.insertBefore(timerSettingsGroup, startButton);
+                } else {
+                    settingsDiv.appendChild(timerSettingsGroup);
+                }
+            }
+            
+            // Initialize dropdown after adding to DOM
+            initializeTimerDropdown();
         }
-        
-        // Initialize dropdown after adding to DOM
-        initializeTimerDropdown();
     }
     
     // Format time as mm:ss
@@ -767,6 +867,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
+        // Check if AI king was captured
+        if (capturedPiece && capturedPiece.type === 'king') {
+            endGame('player-wins');
+            return;
+        }
+
         // Switch turns
         isPlayerTurn = false;
         updateStatus('AI is thinking...');
@@ -797,7 +903,10 @@ document.addEventListener('DOMContentLoaded', function() {
             endGame('player-wins');
             return;
         }
-        
+
+        // Check if AI king is in check
+        const kingInCheck = isKingInCheck(aiColor);
+
         // Choose a piece to move based on difficulty
         let moveFrom, moveTo;
         
@@ -881,6 +990,45 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
+        // Add this function to detect if a king is in check
+        function isKingInCheck(color) {
+            // First, find the king's position
+            let kingPosition = -1;
+                for (let i = 0; i < 64; i++) {
+                    if (board[i] && board[i].type === 'king' && board[i].color === color) {
+                    kingPosition = i;
+                    break;
+                    }
+                }
+            if (kingPosition === -1) return false; // King not found (shouldn't happen)
+
+                // Check if any enemy piece can capture the king
+                const enemyColor = color === 'white' ? 'black' : 'white';
+                for (let i = 0; i < 64; i++) {
+                    const piece = board[i];
+                    if (piece && piece.color === enemyColor) {
+                        const validMoves = getValidMoves(i);
+                        if (validMoves.includes(kingPosition)) {
+                            return true; // King is in check
+                        }
+                    }
+                }
+                
+                return false; // King is not in check
+        }
+
+        // Helper function to get piece value
+        function getPieceValue(pieceType) {
+            const pieceValues = {
+            'pawn': 1,
+            'knight': 3,
+            'bishop': 3,
+            'rook': 5,
+            'queen': 9,
+            'king': 100 // High value to prioritize king safety
+            };
+            return pieceValues[pieceType] || 0;
+        }
         // Execute AI move
         if (moveFrom !== undefined && moveTo !== undefined) {
             const capturedPiece = board[moveTo];
@@ -907,7 +1055,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const sound = capturedPiece ? 'capture-sound' : 'move-sound';
                 playSound(sound);
             }
-            
+
             // Check if player king is captured
             if (capturedPiece && capturedPiece.type === 'king') {
                 endGame('ai-wins');
@@ -1015,7 +1163,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         helpButton.addEventListener('click', showGameInfo);
         
-        document.querySelector('.game-container').appendChild(helpButton);
+        const gameContainer = document.querySelector('.game-container');
+        if (gameContainer) {
+            gameContainer.appendChild(helpButton);
+        }
     }
     
     // Show game info
@@ -1148,35 +1299,10 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("Game started successfully");
     }
     
-    // Initialize game function
-    function initializeGame() {
-        console.log("Initializing game...");
-        
-        // Check if board has been created properly
-        if (document.querySelectorAll('#chessboard .square').length === 0) {
-            console.log("Creating chess board...");
-            createChessBoard();
-        }
-        
-        // Make sure the timer dropdown is working
-        initializeTimerDropdown();
-        
-        // Make sure the start game button has the correct event listener
-        const startButton = document.getElementById('new-game');
-        if (startButton) {
-            console.log("Adding event listener to start button");
-            
-            // Remove any existing event listeners (to prevent duplicates)
-            const newStartButton = startButton.cloneNode(true);
-            startButton.parentNode.replaceChild(newStartButton, startButton);
-            
-            // Add the event listener
-            newStartButton.addEventListener('click', startNewGame);
-        } else {
-            console.error("Start game button not found");
-        }
-    }
-    
-    // Auto-initialize after page load
-    setTimeout(initializeGame, 300);
+    // Initialize the game on page load
+    setTimeout(function() {
+        console.log("Initializing chess game...");
+        updateSettingsUI();
+        startNewGame();
+    }, 500);
 });
