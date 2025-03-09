@@ -54,16 +54,13 @@ function initSounds() {
 
 // Function to play a sound
 function playSound(soundElement) {
-    if (!soundEnabled || !soundElement) return;
-    
-    try {
-        soundElement.currentTime = 0;
-        soundElement.play()
-            .catch(error => {
-                console.log("Error playing sound:", error);
-            });
-    } catch (e) {
-        console.log("Error playing sound:", e);
+    if (soundEnabled && soundElement && soundElement.src) {
+        try {
+            soundElement.currentTime = 0;
+            soundElement.play().catch(e => console.log("Sound error:", e));
+        } catch (e) {
+            console.log("Error playing sound:", e);
+        }
     }
 }
 
