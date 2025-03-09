@@ -1,17 +1,47 @@
-// chess.js - Basic Chess Game Logic
+// chess.js - Professional chess game with timer functionality
 
 document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements
     const chessBoard = document.getElementById('chess-board');
-    const statusText = document.getElementById('game-status-text');
-    const newGameBtn = document.getElementById('new-game');
+    const statusText = document.getElementById('game-status-text') || document.querySelector('.game-status');    const newGameBtn = document.getElementById('new-game') || document.querySelector('#start-game');
+    const resignBtn = document.getElementById('resign');
     const playWhiteBtn = document.getElementById('play-white');
     const playBlackBtn = document.getElementById('play-black');
     const easyModeBtn = document.getElementById('easy-mode');
     const normalModeBtn = document.getElementById('normal-mode');
     const hardModeBtn = document.getElementById('hard-mode');
+    const soundOnBtn = document.getElementById('sound-on');
+    const soundOffBtn = document.getElementById('sound-off');
     const capturedBlack = document.getElementById('captured-black');
     const capturedWhite = document.getElementById('captured-white');
+    const whiteTimer = document.getElementById('white-timer');
+    const blackTimer = document.getElementById('black-timer');
+    const timeMinutesInput = document.getElementById('time-minutes');
+    const timeIncrementSelect = document.getElementById('time-increment');
+    
+    // Add board coordinates
+    const boardCoordinates = document.createElement('div');
+    boardCoordinates.className = 'board-coordinates';
+    
+    // Add file coordinates (a-h)
+    for (let i = 0; i < 8; i++) {
+        const fileCoord = document.createElement('div');
+        fileCoord.className = 'coordinate file-coordinate';
+        fileCoord.style.left = `${(i * 12.5) + 6.25}%`;
+        fileCoord.textContent = String.fromCharCode(97 + i); // 'a' to 'h'
+        boardCoordinates.appendChild(fileCoord);
+    }
+    
+    // Add rank coordinates (1-8)
+    for (let i = 0; i < 8; i++) {
+        const rankCoord = document.createElement('div');
+        rankCoord.className = 'coordinate rank-coordinate';
+        rankCoord.style.top = `${(i * 12.5) + 6.25}%`;
+        rankCoord.textContent = 8 - i; // '8' to '1'
+        boardCoordinates.appendChild(rankCoord);
+    }
+    
+    chessBoard.appendChild(boardCoordinates);
     
     // Game state
     let playerColor = 'white';
@@ -19,13 +49,20 @@ document.addEventListener('DOMContentLoaded', function() {
     let selectedPiece = null;
     let highlightedCells = [];
     let isPlayerTurn = true;
-    let gameInProgress = true;
+    let gameInProgress = false;
     let capturedPieces = {
         white: [],
         black: []
     };
+    let timers = {
+        white: 600, // 10 minutes in seconds
+        black: 600,
+        increment: 0,
+        active: null,
+        interval: null
+    };
     
-    // Chess Unicode characters
+    // Chess Unicode characters with shadow classes for better visibility
     const pieces = {
         white: {
             pawn: '♙',
@@ -89,6 +126,60 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let board = [...initialBoard];
     
+    // Timer functions
+    function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+    
+    function updateTimerDisplay() {
+        whiteTimer.textContent = formatTime(timers.white);
+        blackTimer.textContent = formatTime(timers.black);
+    }
+    
+    function startTimer() {
+        if (timers.interval) {
+            clearInterval(timers.interval);
+        }
+        
+        timers.active = isPlayerTurn ? playerColor : (playerColor === 'white' ? 'black' : 'white');
+        
+        timers.interval = setInterval(() => {
+            if (timers[timers.active] <= 0) {
+                clearInterval(timers.interval);
+                endGame(timers.active === playerColor ? 'timeout-loss' : 'timeout-win');
+                return;
+            }
+            
+            timers[timers.active]--;
+            updateTimerDisplay();
+        }, 1000);
+    }
+    
+    function stopTimer() {
+        if (timers.interval) {
+            clearInterval(timers.interval);
+            timers.interval = null;
+        }
+    }
+    
+    function switchTimer() {
+        if (timers.active) {
+            // Add increment if configured
+            if (timers.increment > 0) {
+                timers[timers.active] += timers.increment;
+                updateTimerDisplay();
+            }
+        }
+        
+        stopTimer();
+        
+        if (gameInProgress) {
+            startTimer();
+        }
+    }
+    
     // Set difficulty level
     easyModeBtn.addEventListener('click', () => {
         difficulty = 'easy';
@@ -124,14 +215,45 @@ document.addEventListener('DOMContentLoaded', function() {
         playWhiteBtn.classList.remove('active');
     });
     
+    // Sound toggle
+    soundOnBtn.addEventListener('click', () => {
+        soundEnabled = true;
+        soundOnBtn.classList.add('active');
+        soundOffBtn.classList.remove('active');
+    });
+    
+    soundOffBtn.addEventListener('click', () => {
+        soundEnabled = false;
+        soundOffBtn.classList.remove('active');
+        soundOnBtn.classList.add('active');
+    });
+    
     // New game button
     newGameBtn.addEventListener('click', () => {
+        // Get timer settings
+        const minutes = parseInt(timeMinutesInput.value) || 10;
+        const increment = parseInt(timeIncrementSelect.value) || 0;
+        
+        timers.white = minutes * 60;
+        timers.black = minutes * 60;
+        timers.increment = increment;
+        
+        updateTimerDisplay();
         startNewGame();
+    });    
+    // Resign button
+    resignBtn.addEventListener('click', () => {
+        if (gameInProgress) {
+            endGame('resign');
+        }
     });
     
     // Create the chess board
     function createBoard() {
-        chessBoard.innerHTML = '';
+        // Clear existing board
+        while (chessBoard.firstChild) {
+            chessBoard.removeChild(chessBoard.firstChild);
+        }
         
         // Create 64 cells (8x8)
         for (let row = 0; row < 8; row++) {
@@ -144,37 +266,54 @@ document.addEventListener('DOMContentLoaded', function() {
                 cell.classList.add((row + col) % 2 === 0 ? 'light' : 'dark');
                 cell.dataset.index = index;
                 
-                // Add rank and file labels (chess coordinates)
-                if (col === 0) {
-                    const rankLabel = document.createElement('span');
-                    rankLabel.classList.add('coordinates', 'rank');
-                    rankLabel.textContent = 8 - row;
-                    cell.appendChild(rankLabel);
-                }
-                
-                if (row === 7) {
-                    const fileLabel = document.createElement('span');
-                    fileLabel.classList.add('coordinates', 'file');
-                    fileLabel.textContent = String.fromCharCode(97 + col); // 'a' to 'h'
-                    cell.appendChild(fileLabel);
-                }
-                
                 // Add piece if there is one at this position
                 const pieceData = board[index];
                 if (pieceData) {
                     const { piece, color } = pieceData;
-                    cell.textContent = pieces[color][piece];
+                    const pieceSpan = document.createElement('span');
+                    pieceSpan.className = color === 'white' ? 'white-piece' : 'black-piece';
+                    pieceSpan.textContent = getPieceCharacter(piece, color);
+                    cell.appendChild(pieceSpan);
                 }
-                
-                // Add click event
-                cell.addEventListener('click', () => handleCellClick(index));
                 
                 // Add to the board
                 chessBoard.appendChild(cell);
             }
         }
+        
+        // Add coordinates if needed
+        addCoordinates();
     }
+
+        // Get Unicode character for a chess piece
+        function getPieceCharacter(piece, color) {
+            const pieces = {
+                white: {
+                    pawn: '♙',
+                    rook: '♖',
+                    knight: '♘',
+                    bishop: '♗',
+                    queen: '♕',
+                    king: '♔'
+                },
+                black: {
+                    pawn: '♟',
+                    rook: '♜',
+                    knight: '♞',
+                    bishop: '♝',
+                    queen: '♛',
+                    king: '♚'
+                }
+            };
+            
+            return pieces[color][piece];
+        }
     
+            // Add board coordinates
+    function addCoordinates() {
+        // Implement if needed
+    }
+
     // Handle clicking on a cell
     function handleCellClick(index) {
         if (!gameInProgress || !isPlayerTurn) return;
@@ -214,7 +353,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function clearHighlights() {
         const cells = document.querySelectorAll('.cell');
         cells.forEach(cell => {
-            cell.classList.remove('selected', 'highlight');
+            cell.classList.remove('selected', 'highlight', 'capture');
         });
         highlightedCells = [];
     }
@@ -225,11 +364,12 @@ document.addEventListener('DOMContentLoaded', function() {
         highlightedCells = validMoves;
         
         validMoves.forEach(moveIndex => {
-            highlightCell(moveIndex, 'highlight');
+            const className = board[moveIndex] ? 'highlight capture' : 'highlight';
+            highlightCell(moveIndex, className);
         });
     }
     
-    // Get valid moves for a piece (simplified for this example)
+    // Get valid moves for a piece
     function getValidMoves(index) {
         const piece = board[index];
         if (!piece) return [];
@@ -238,9 +378,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const row = Math.floor(index / 8);
         const col = index % 8;
         const validMoves = [];
-        
-        // Simple move generation - just for demonstration
-        // In a real chess game, you'd need much more complex logic
         
         switch (pieceType) {
             case 'pawn':
@@ -286,7 +423,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 break;
                 
             case 'rook':
-                // Simplified rook movement (horizontal and vertical)
+                // Rook movement (horizontal and vertical)
                 // Horizontal (left and right)
                 for (let c = col - 1; c >= 0; c--) {
                     const checkIndex = row * 8 + c;
@@ -417,7 +554,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
             case 'queen':
                 // Queen movement (combination of rook and bishop)
-                // Horizontal (left and right) - same as rook
+                // Horizontal and vertical (rook-like)
                 for (let c = col - 1; c >= 0; c--) {
                     const checkIndex = row * 8 + c;
                     if (!board[checkIndex]) {
@@ -442,7 +579,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
                 
-                // Vertical (up and down) - same as rook
                 for (let r = row - 1; r >= 0; r--) {
                     const checkIndex = r * 8 + col;
                     if (!board[checkIndex]) {
@@ -467,7 +603,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
                 
-                // Diagonals - same as bishop
+                // Diagonals (bishop-like)
                 for (let i = 1; row - i >= 0 && col - i >= 0; i++) {
                     const checkIndex = (row - i) * 8 + (col - i);
                     if (!board[checkIndex]) {
@@ -546,12 +682,23 @@ document.addEventListener('DOMContentLoaded', function() {
     function makeMove(fromIndex, toIndex) {
         const piece = board[fromIndex];
         const targetPiece = board[toIndex];
+        const isCapture = !!targetPiece;
         
         // If there's a capture, add to captured pieces
-        if (targetPiece) {
-            const captureColor = targetPiece.color === 'white' ? 'white' : 'black';
+        if (isCapture) {
+            const captureColor = targetPiece.color;
             capturedPieces[captureColor].push(targetPiece);
             updateCapturedDisplay();
+            
+            // Play capture sound
+            if (typeof playSound === 'function') {
+                playSound(document.getElementById('capture-sound'));
+            }
+        } else {
+            // Play move sound
+            if (typeof playSound === 'function') {
+                playSound(document.getElementById('move-sound'));
+            }
         }
         
         // Move the piece
@@ -561,29 +708,35 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update display
         updateBoard();
         
-        // Play sound
-        playMoveSound();
+        // Check for check
+        const isCheck = isKingInCheck(piece.color === 'white' ? 'black' : 'white');
         
-        // Check for game end conditions (simplified)
-        if (targetPiece && targetPiece.piece === 'king') {
-            // King was captured - game over
-            gameInProgress = false;
-            const winner = piece.color === playerColor ? 'player' : 'ai';
-            
-            if (winner === 'player') {
-                statusText.textContent = "You Win!";
-                playWinSound();
-            } else {
-                statusText.textContent = "AI Wins!";
-                playLoseSound();
+        if (isCheck) {
+            // Play check sound
+            if (typeof playSound === 'function') {
+                playSound(document.getElementById('check-sound'));
             }
-            
+        }
+        
+        // Check for game end conditions
+        if (isCheckmate(piece.color === 'white' ? 'black' : 'white')) {
+            endGame(piece.color === playerColor ? 'checkmate-win' : 'checkmate-loss');
+            return;
+        }
+        
+        if (isStalemate(piece.color === 'white' ? 'black' : 'white')) {
+            endGame('stalemate');
             return;
         }
         
         // Switch turns
         isPlayerTurn = !isPlayerTurn;
-        statusText.textContent = isPlayerTurn ? `Your Turn (${playerColor})` : `AI's Turn`;
+        
+        // Update status
+        updateGameStatus(isCheck);
+        
+        // Switch timer
+        switchTimer();
         
         // If it's AI's turn, make an AI move after a delay
         if (!isPlayerTurn) {
@@ -591,28 +744,111 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Check if a king is in check
+    function isKingInCheck(kingColor) {
+        // Find king position
+        let kingIndex = -1;
+        for (let i = 0; i < 64; i++) {
+            if (board[i] && board[i].piece === 'king' && board[i].color === kingColor) {
+                kingIndex = i;
+                break;
+            }
+        }
+        
+        if (kingIndex === -1) return false;
+        
+        // Check if any opposing piece can capture the king
+        const opposingColor = kingColor === 'white' ? 'black' : 'white';
+        
+        for (let i = 0; i < 64; i++) {
+            const piece = board[i];
+            if (piece && piece.color === opposingColor) {
+                const moves = getValidMoves(i);
+                if (moves.includes(kingIndex)) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    // Check for checkmate
+    function isCheckmate(kingColor) {
+        if (!isKingInCheck(kingColor)) return false;
+        
+        // Check if any move can get the king out of check
+        for (let i = 0; i < 64; i++) {
+            const piece = board[i];
+            if (piece && piece.color === kingColor) {
+                const moves = getValidMoves(i);
+                
+                // Try each move to see if it gets out of check
+                for (const moveIndex of moves) {
+                    const originalTarget = board[moveIndex];
+                    
+                    // Make temporary move
+                    board[moveIndex] = piece;
+                    board[i] = null;
+                    
+                    // Check if still in check
+                    const stillInCheck = isKingInCheck(kingColor);
+                    
+                    // Undo move
+                    board[i] = piece;
+                    board[moveIndex] = originalTarget;
+                    
+                    if (!stillInCheck) {
+                        return false; // Found a move that gets out of check
+                    }
+                }
+            }
+        }
+        
+        return true; // No move gets out of check
+    }
+    
+    // Check for stalemate
+    function isStalemate(kingColor) {
+        if (isKingInCheck(kingColor)) return false;
+        
+        // Check if any legal move exists
+        for (let i = 0; i < 64; i++) {
+            const piece = board[i];
+            if (piece && piece.color === kingColor) {
+                const moves = getValidMoves(i);
+                
+                for (const moveIndex of moves) {
+                    const originalTarget = board[moveIndex];
+                    
+                    // Make temporary move
+                    board[moveIndex] = piece;
+                    board[i] = null;
+                    
+                    // Check if move puts king in check
+                    const putsInCheck = isKingInCheck(kingColor);
+                    
+                    // Undo move
+                    board[i] = piece;
+                    board[moveIndex] = originalTarget;
+                    
+                    if (!putsInCheck) {
+                        return false; // Found a legal move
+                    }
+                }
+            }
+        }
+        
+        return true; // No legal moves
+    }
+    
     // Update the board display
     function updateBoard() {
         const cells = document.querySelectorAll('.cell');
         
         cells.forEach((cell, index) => {
-            // Remove any piece that might be there
-            cell.textContent = '';
-            
-            // Show coordinates
-            if (index % 8 === 0) {
-                const rankLabel = document.createElement('span');
-                rankLabel.classList.add('coordinates', 'rank');
-                rankLabel.textContent = 8 - Math.floor(index / 8);
-                cell.appendChild(rankLabel);
-            }
-            
-            if (Math.floor(index / 8) === 7) {
-                const fileLabel = document.createElement('span');
-                fileLabel.classList.add('coordinates', 'file');
-                fileLabel.textContent = String.fromCharCode(97 + (index % 8)); // 'a' to 'h'
-                cell.appendChild(fileLabel);
-            }
+            // Clear existing content
+            cell.innerHTML = '';
             
             // Add piece if there is one
             const pieceData = board[index];
@@ -620,23 +856,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 const { piece, color } = pieceData;
                 const pieceChar = pieces[color][piece];
                 
-                // Add the piece character to the cell
-                cell.textContent = pieceChar;
+                // Create a span with special styling for visibility
+                const pieceSpan = document.createElement('span');
+                pieceSpan.className = color === 'white' ? 'white-piece' : 'black-piece';
+                pieceSpan.textContent = pieceChar;
                 
-                // Make sure coordinates stay visible
-                if (index % 8 === 0) {
-                    const rankLabel = document.createElement('span');
-                    rankLabel.classList.add('coordinates', 'rank');
-                    rankLabel.textContent = 8 - Math.floor(index / 8);
-                    cell.appendChild(rankLabel);
-                }
-                
-                if (Math.floor(index / 8) === 7) {
-                    const fileLabel = document.createElement('span');
-                    fileLabel.classList.add('coordinates', 'file');
-                    fileLabel.textContent = String.fromCharCode(97 + (index % 8));
-                    cell.appendChild(fileLabel);
-                }
+                cell.appendChild(pieceSpan);
             }
         });
     }
@@ -649,15 +874,71 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Add white captured pieces
         capturedPieces.white.forEach(pieceData => {
-            const pieceChar = pieces[pieceData.color][pieceData.piece];
-            capturedWhite.innerHTML += pieceChar;
+            const pieceHTML = pieces[pieceData.color][pieceData.piece];
+            capturedWhite.innerHTML += pieceHTML;
         });
         
         // Add black captured pieces
         capturedPieces.black.forEach(pieceData => {
-            const pieceChar = pieces[pieceData.color][pieceData.piece];
-            capturedBlack.innerHTML += pieceChar;
+            const pieceHTML = pieces[pieceData.color][pieceData.piece];
+            capturedBlack.innerHTML += pieceHTML;
         });
+    }
+    
+    // Update game status text
+    function updateGameStatus(isCheck = false) {
+        if (isCheck) {
+            gameStatus.textContent = `Check! ${isPlayerTurn ? 'Your' : 'AI\'s'} turn to move.`;
+        } else {
+            gameStatus.textContent = isPlayerTurn 
+                ? 'Your turn to move. Select a piece to begin.'
+                : 'AI is thinking...';
+        }
+    }
+    
+    // End the game
+    function endGame(result) {
+        gameInProgress = false;
+        stopTimer();
+        
+        switch (result) {
+            case 'checkmate-win':
+                gameStatus.textContent = 'Checkmate! You win!';
+                if (typeof playSound === 'function') {
+                    playSound(document.getElementById('win-sound'));
+                }
+                break;
+            case 'checkmate-loss':
+                gameStatus.textContent = 'Checkmate! AI wins.';
+                if (typeof playSound === 'function') {
+                    playSound(document.getElementById('lose-sound'));
+                }
+                break;
+            case 'stalemate':
+                gameStatus.textContent = 'Stalemate! The game is a draw.';
+                if (typeof playSound === 'function') {
+                    playSound(document.getElementById('draw-sound'));
+                }
+                break;
+            case 'timeout-win':
+                gameStatus.textContent = 'AI ran out of time! You win!';
+                if (typeof playSound === 'function') {
+                    playSound(document.getElementById('win-sound'));
+                }
+                break;
+            case 'timeout-loss':
+                gameStatus.textContent = 'You ran out of time! AI wins.';
+                if (typeof playSound === 'function') {
+                    playSound(document.getElementById('lose-sound'));
+                }
+                break;
+            case 'resign':
+                gameStatus.textContent = 'You resigned. AI wins.';
+                if (typeof playSound === 'function') {
+                    playSound(document.getElementById('lose-sound'));
+                }
+                break;
+        }
     }
     
     // Make an AI move
@@ -676,54 +957,109 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (aiPieces.length === 0) return;
         
-        // Choose a random piece based on difficulty
-        let pieceToMove, moves;
+        // Choose a move based on difficulty
         let bestMove = null;
         
         if (difficulty === 'easy') {
             // Easy: just make random moves
-            do {
-                pieceToMove = aiPieces[Math.floor(Math.random() * aiPieces.length)];
-                moves = getValidMoves(pieceToMove);
-            } while (moves.length === 0 && aiPieces.length > 0);
+            const validMoves = [];
             
-            if (moves.length > 0) {
-                bestMove = {
-                    from: pieceToMove,
-                    to: moves[Math.floor(Math.random() * moves.length)]
-                };
+            // Get all possible moves
+            for (const pieceIndex of aiPieces) {
+                const moves = getValidMoves(pieceIndex);
+                
+                for (const moveIndex of moves) {
+                    // Check if move is legal (doesn't put king in check)
+                    const piece = board[pieceIndex];
+                    const originalTarget = board[moveIndex];
+                    
+                    // Make temporary move
+                    board[moveIndex] = piece;
+                    board[pieceIndex] = null;
+                    
+                    // Check if move is legal
+                    const isLegal = !isKingInCheck(aiColor);
+                    
+                    // Undo move
+                    board[pieceIndex] = piece;
+                    board[moveIndex] = originalTarget;
+                    
+                    if (isLegal) {
+                        validMoves.push({ from: pieceIndex, to: moveIndex });
+                    }
+                }
+            }
+            
+            if (validMoves.length > 0) {
+                bestMove = validMoves[Math.floor(Math.random() * validMoves.length)];
             }
         } else {
-            // Normal/Hard: Prioritize captures and check for checkmate
+            // Normal/Hard: Use more strategy
             const possibleMoves = [];
             
             // Get all possible moves
             for (const pieceIndex of aiPieces) {
-                const validMoves = getValidMoves(pieceIndex);
+                const moves = getValidMoves(pieceIndex);
                 
-                for (const moveIndex of validMoves) {
+                for (const moveIndex of moves) {
+                    // Check if move is legal (doesn't put king in check)
+                    const piece = board[pieceIndex];
+                    const originalTarget = board[moveIndex];
+                    
+                    // Make temporary move
+                    board[moveIndex] = piece;
+                    board[pieceIndex] = null;
+                    
+                    // Check if move is legal
+                    const isLegal = !isKingInCheck(aiColor);
+                    
+                    // Additional checks for better evaluation
                     let score = 0;
                     
-                    // Capturing a piece is good
-                    if (board[moveIndex]) {
-                        // Assign value to pieces (approximate chess piece values)
+                    if (isLegal) {
+                        // Basic piece values
                         const pieceValues = {
                             pawn: 1,
                             knight: 3,
                             bishop: 3,
                             rook: 5,
                             queen: 9,
-                            king: 100
+                            king: 0 // King value not used for captures
                         };
                         
-                        score += pieceValues[board[moveIndex].piece];
+                        // Capturing is good
+                        if (originalTarget) {
+                            score += pieceValues[originalTarget.piece];
+                        }
+                        
+                        // Check if move gives check
+                        if (isKingInCheck(playerColor)) {
+                            score += 1;
+                        }
+                        
+                        // Check if move is checkmate
+                        if (isCheckmate(playerColor)) {
+                            score += 100;
+                        }
+                        
+                        // Control of center (for normal/hard)
+                        if (difficulty === 'hard') {
+                            const centerSquares = [27, 28, 35, 36];
+                            if (centerSquares.includes(moveIndex)) {
+                                score += 0.5;
+                            }
+                        }
+                        
+                        possibleMoves.push({
+                            from: pieceIndex,
+                            to: moveIndex,
+                            score: score
+                        });
                     }
                     
-                    possibleMoves.push({
-                        from: pieceIndex,
-                        to: moveIndex,
-                        score: score
-                    });
+                    // Undo move
+                    board[pieceIndex] = piece;
+                    board[moveIndex] = originalTarget;
                 }
             }
             
@@ -751,9 +1087,11 @@ document.addEventListener('DOMContentLoaded', function() {
             makeMove(bestMove.from, bestMove.to);
         } else {
             // No valid moves - game should end
-            gameInProgress = false;
-            statusText.textContent = "Game Over - Stalemate";
-            playDrawSound();
+            if (isKingInCheck(aiColor)) {
+                endGame('checkmate-win');
+            } else {
+                endGame('stalemate');
+            }
         }
     }
     
@@ -773,9 +1111,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Update UI
         clearHighlights();
-        updateBoard();
+        createBoard();
         updateCapturedDisplay();
-        statusText.textContent = isPlayerTurn ? `Your Turn (${playerColor})` : `AI's Turn`;
+        updateGameStatus();
+        
+        // Reset and start timer
+        updateTimerDisplay();
+        startTimer();
         
         // If AI starts, make a move
         if (!isPlayerTurn) {
@@ -785,5 +1127,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize the game
     createBoard();
-    startNewGame();
+    updateTimerDisplay();
+    gameStatus.textContent = 'Set up your game and click "New Game" to begin.';
 });
